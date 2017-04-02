@@ -5,6 +5,8 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using XmlToDataGrid.ViewModels;
+using XmlToDataGrid.Views;
 
 namespace XmlToDataGrid
 {
@@ -13,5 +15,12 @@ namespace XmlToDataGrid
     /// </summary>
     public partial class App : Application
     {
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+            MainWindowViewModel vm = new MainWindowViewModel();
+            Current.MainWindow = new MainWindow {DataContext = vm};
+            Current.MainWindow.Show();
+        }
     }
 }
