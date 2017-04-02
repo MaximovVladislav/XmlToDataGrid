@@ -71,6 +71,7 @@
     <Compile Include="Infrastructure\DataGridColumnBinder.cs" />
     <Compile Include="Infrastructure\RelayCommand.cs" />
     <Compile Include="Models\Column.cs" />
+    <Compile Include="Models\Terminal.cs" />
     <Compile Include="ViewModels\BaseViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
