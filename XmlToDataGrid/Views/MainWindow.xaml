@@ -12,8 +12,7 @@
         Title="{Binding Title}" Height="350" Width="525">
     <Window.Resources>
         <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
-        <converters:ColumnToDataGridColumnConverter x:Key="ColumnToDataGridColumnConverter"/>
-        <converters:DataViewTestConverter x:Key="DataViewTestConverter"/>
+        <converters:DefaultDateToNothingConverter x:Key="DefaultDateToNothingConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -25,14 +24,16 @@
         
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <Button Content="Загрузить" Margin="5" Padding="5"
-                    Command="{Binding UpdateCommand}"/>
+                    Command="{Binding LoadCommand}"/>
         </StackPanel>
         
         <StackPanel Grid.Row="1" Orientation="Horizontal" Height="Auto">
             <TextBlock Text="Дата начала:" Margin="5"/>
-            <TextBlock Text="{Binding BeginDate, StringFormat=dd.MM.yyyy - HH:mm:ss}" Margin="5"/>
+            <TextBlock Text="{Binding BeginDate, StringFormat=dd.MM.yyyy - HH:mm:ss, Converter={StaticResource DefaultDateToNothingConverter}}" 
+                       Margin="5"/>
             <TextBlock Text="Дата окончания:" Margin="5"/>
-            <TextBlock Text="{Binding EndDate, StringFormat=dd.MM.yyyy - HH:mm:ss}" Margin="5"/>
+            <TextBlock Text="{Binding EndDate, StringFormat=dd.MM.yyyy - HH:mm:ss, Converter={StaticResource DefaultDateToNothingConverter}}" 
+                       Margin="5"/>
         </StackPanel>
         
         <StackPanel Grid.Row="2" Orientation="Horizontal">
@@ -47,7 +48,8 @@
                   ItemsSource="{Binding Data.DefaultView, UpdateSourceTrigger=PropertyChanged}"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
-                  infrastructure:ColumnBehavior.Columns="{Binding Columns}">
+                  infrastructure:ColumnBehavior.Columns="{Binding Columns}"
+                  IsReadOnly="True">
             <!--<DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Path=protocol}"/>
                 <DataGridTextColumn Binding="{Binding Path=serialId}"/>

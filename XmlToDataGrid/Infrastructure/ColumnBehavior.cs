@@ -13,6 +13,9 @@ using XmlToDataGrid.Models;
 
 namespace XmlToDataGrid.Infrastructure
 {
+    /// <summary>
+    /// Класс, содержащий прикрепляющуюся коллекцию столбцов <see cref="Column"/> и определяющий ее поведение 
+    /// </summary>
     public class ColumnBehavior
     {
         public static readonly DependencyProperty ColumnsProperty = DependencyProperty.RegisterAttached("Columns",
@@ -20,7 +23,7 @@ namespace XmlToDataGrid.Infrastructure
             new UIPropertyMetadata(null, ColumnsPropertyChanged));
 
         private static DataGrid _dataGrid;
-        private static ColumnToDataGridColumnConverter _converter = new ColumnToDataGridColumnConverter();
+        private static readonly DBNullToDashConverter _dbNullToDashConverter = new DBNullToDashConverter();
 
         public static ObservableCollection<Column> GetColumns(DependencyObject element)
         {
@@ -42,9 +45,11 @@ namespace XmlToDataGrid.Infrastructure
 
             if (columns == null) return;
 
-            foreach (var column in columns)
+            IList newColumns = (IList) e.NewValue;
+
+            if (newColumns.Count > 0)
             {
-                AddColumnsInAcyncContext(_dataGrid, (IList) e.NewValue/*ToGridColumn(column)*/);
+                AddColumnsInAcyncContext(_dataGrid, newColumns);
             }
 
             columns.CollectionChanged += Columns_CollectionChanged;
@@ -54,57 +59,26 @@ namespace XmlToDataGrid.Infrastructure
         {
             if (e.Action == NotifyCollectionChangedAction.Add)
             {
-
-                foreach (Column column in e.NewItems)
-                {
-                    AddColumnsInAcyncContext(_dataGrid, e.NewItems);
-                }
+                AddColumnsInAcyncContext(_dataGrid, e.NewItems);
             }
-            //else if (e.Action == NotifyCollectionChangedAction.Move)
-            //{
-            //    _dataGrid.Columns.Move(e.OldStartingIndex, e.NewStartingIndex);
-            //}
-            //else if (e.Action == NotifyCollectionChangedAction.Remove)
-            //{
-            //    foreach (DataGridColumn column in e.NewItems)
-            //    {
-            //        _dataGrid.Columns.Remove(column);
-            //    }
-            //}
-            //else if (e.Action == NotifyCollectionChangedAction.Replace)
-            //{
-            //    _dataGrid.Columns[e.NewStartingIndex] = e.NewItems[0] as DataGridColumn;
-            //}
-            //else if (e.Action == NotifyCollectionChangedAction.Reset)
-            //{
-            //    _dataGrid.Columns.Clear();
-            //    foreach (DataGridColumn column in e.NewItems)
-            //    {
-            //        _dataGrid.Columns.Add(column);
-            //    }
-            //}
         }
 
         private static DataGridColumn ToGridColumn(Column column)
         {
             if (column == null) throw new ArgumentNullException();
+            
+            DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
+            Binding binding = new Binding(column.Name);
 
             if (column.ValueType == typeof(DateTime))
             {
-                DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
-                Binding binding = new Binding(column.Name);
                 binding.StringFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
-                newDataGridColumn.Binding = binding;
-                newDataGridColumn.Header = column.Name;
-                return newDataGridColumn;
             }
-            else
-            {
-                DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
-                newDataGridColumn.Binding = new Binding(column.Name);
-                newDataGridColumn.Header = column.Name;
-                return newDataGridColumn;
-            }
+
+            binding.Converter = _dbNullToDashConverter;
+            newDataGridColumn.Binding = binding;
+            newDataGridColumn.Header = column.Name;
+            return newDataGridColumn;
         }
 
         private static void AddColumnsInAcyncContext(DataGrid dataGrid, IList newItems)
@@ -120,9 +94,6 @@ namespace XmlToDataGrid.Infrastructure
                     {
                         AddColumnsInner(dataGrid, newItems);
                     }));
-
-                //dataGrid.Dispatcher.Invoke(DispatcherPriority.Normal,
-                //    new Action<object>(AddColumnInner), new object[] {column});
             }
         }
 

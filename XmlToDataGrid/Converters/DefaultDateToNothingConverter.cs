@@ -4,23 +4,24 @@ using System.Windows.Data;
 
 namespace XmlToDataGrid.Converters
 {
-    public class TimeSpanToStringConverter : IValueConverter
+    public class DefaultDateToNothingConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is TimeSpan)
+            if (value is DateTime)
             {
-                TimeSpan ts = (TimeSpan) value;
-
-                if (ts == default(TimeSpan))
+                DateTime dValue = (DateTime) value;
+                if (dValue == default(DateTime))
                 {
-                    return string.Empty;
+                    return Binding.DoNothing;
                 }
-
-                return $"{(int)ts.TotalHours}:{ts.Minutes}:{ts.Seconds}";
+                else
+                {
+                    return value;
+                }
             }
 
-            return string.Empty;
+            return Binding.DoNothing;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -3,6 +3,9 @@ using System.Windows.Input;
 
 namespace XmlToDataGrid.Infrastructure
 {
+    /// <summary>
+    /// Класс реализующий интерфейс <see cref="ICommand"/>
+    /// </summary>
     public class RelayCommand : ICommand
     {
         private readonly Action<object> _execute;

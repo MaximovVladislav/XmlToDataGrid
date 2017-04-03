@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,15 +21,12 @@ namespace XmlToDataGrid.ViewModels
 {
     public class MainWindowViewModel : BaseViewModel
     {
-        private ICommand _updateCommand;
+        private ICommand _loadCommand;
         private DateTime _beginDate;
         private DateTime _endDate;
         private string _serverState;
         private TimeSpan _upTime;
-
-        //private string _dataDateFormat = "dd.MM.yyyy - HH:mm:ss";
-        //private string _terminalDateFormat = "dd.MM.yyyy.HH.mm.ss";
-
+        
         public MainWindowViewModel()
         {
             Data = new DataTable();
@@ -35,7 +34,7 @@ namespace XmlToDataGrid.ViewModels
             Columns = new ObservableCollection<Column>();
         }
 
-        public string Title => "Датчики";
+        public string Title => "Терминалы";
 
         public DateTime BeginDate
         {
@@ -79,21 +78,19 @@ namespace XmlToDataGrid.ViewModels
 
         public DataTable Data { get; set; }
 
-        //public ObservableCollection<DataGridColumn> Columns { get; set; }
-
         public ObservableCollection<Column> Columns { get; set; }
 
-        public ICommand UpdateCommand
+        public ICommand LoadCommand
         {
-            get { return _updateCommand ?? (_updateCommand = new RelayCommand(async action => await UpdateAsync())); }
+            get { return _loadCommand ?? (_loadCommand = new RelayCommand(async action => await LoadAsync())); }
         }
         
 
-        private async Task UpdateAsync()
+        private async Task LoadAsync()
         {
             try
             {
-                await Task.Run(() => UpdateInner());
+                await Task.Run(() => Load());
             }
             catch (Exception ex)
             {
@@ -103,19 +100,19 @@ namespace XmlToDataGrid.ViewModels
             
         }
 
-        private void UpdateInner()
+        private void Load()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
 
-            openFileDialog.DefaultExt = "xml";
-
             if (openFileDialog.ShowDialog() == true)
             {
+                // Имитации длительной работы, чтобы увидеть асинхронность
+                //Thread.Sleep(5000);
+                
                 var doc = XDocument.Load(openFileDialog.FileName);
 
                 XElement dataNode = (XElement)doc.FirstNode;
-                //XAttribute beginDateAttribute = 
-
+                
                 XAttribute tempAttribute = dataNode.Attribute("begindate");
 
                 string dataDateFormat = ConfigurationManager.AppSettings["dataDateFormat"];
@@ -155,101 +152,138 @@ namespace XmlToDataGrid.ViewModels
 
                 if (terminalsNode == null) return;
 
-                //AddDataRow((XElement)terminalsNode.FirstNode);
                 List<DataRow> rowList = new List<DataRow>();
                 
-                foreach(XElement terminalNode in (XElement)terminalsNode.Nodes)
+                // Получаем строки для таблицы
+                foreach(XElement terminalNode in terminalsNode.Nodes())
                 {
-                    rowList.Add(CreateDataRow(terminalNode));
+                    DataRow dataRow;
+                    if (TryCreateDataRow(terminalNode, out dataRow))
+                    {
+                        rowList.Add(dataRow);
+                    }
                 }
                 
-                Data.Rows.AddRangeOnUI(rowList);
+                //Добавляем новые строки в UI потоке
+                Data.Rows.AddRangeUniqueOnUI(rowList);
             }
         }
 
-        DataRow CreateDataRow(XElement terminalNode)
+        
+
+        bool TryCreateDataRow(XElement terminalNode, out DataRow dataRow)
         {
+            dataRow = null;
             if (terminalNode == null) throw new ArgumentNullException(nameof(terminalNode));
 
             var attributes = terminalNode.Attributes();
+            var sensorNodes = terminalNode.Nodes();
 
-            if (attributes.Any())
+            if (!attributes.Any() && !sensorNodes.Any()) return false;
+
+            dataRow = Data.NewRow();
+
+            foreach (XAttribute attribute in attributes)
             {
-                foreach (XAttribute attribute in attributes)
+                string attrName = attribute.Name.ToString();
+                string attrValue = attribute.Value;
+
+                string terminalDateFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
+
+                DateTime timeAtrrValue;
+                bool attrValueIsTime = DateTime.TryParseExact(attrValue, terminalDateFormat,
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out timeAtrrValue);
+
+                if (!Data.Columns.Contains(attrName))
                 {
-                    string attrName = attribute.Name.ToString();
-                    string attrValue = attribute.Value;
-
-                    string terminalDateFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
-
-                    DateTime timeAtrrValue;
-                    bool attrValueIsTime = DateTime.TryParseExact(attrValue, terminalDateFormat,
-                            CultureInfo.InvariantCulture, DateTimeStyles.None, out timeAtrrValue);
-
-                    if (!Data.Columns.Contains(attrName))
+                    if (!attrValueIsTime)
                     {
-                        if (!attrValueIsTime)
+                        DataColumn newColumn = new DataColumn(attrName, typeof(string));
+                        Data.Columns.Add(newColumn);
+
+                        if (attrName == ConfigurationManager.AppSettings["keyAttribute"])
                         {
-                            DataColumn newColumn = new DataColumn(attrName, typeof(string));
-                            Data.Columns.Add(newColumn);
-
-                            Columns.Add(new Column {Name = attrName, ValueType = typeof(string)});
-
-                            //DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
-                            //newDataGridColumn.Binding = new Binding(attrName);
-                            //newDataGridColumn.Header = attrName;
-                            //Columns.Add(newDataGridColumn);
+                            Data.PrimaryKey = new[] {newColumn};
                         }
-                        else
-                        {
-                            DataColumn newColumn = new DataColumn(attrName, typeof(DateTime));
-                            newColumn.AllowDBNull = true;
-                            newColumn.Caption = attrName;
-                            Data.Columns.Add(newColumn);
 
-                            Columns.Add(new Column {Name = attrName, ValueType = typeof(DateTime)});
-
-                            //DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
-                            //Binding binding = new Binding(attrName);
-                            //binding.StringFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
-                            //newDataGridColumn.Binding = binding;
-                            //newDataGridColumn.Header = attrName;
-                            //Columns.Add(newDataGridColumn);
-                        }
+                        Columns.Add(new Column {Name = attrName, ValueType = typeof(string)});
                     }
-
-                    DataRow newRow = Data.NewRow();
-
-                    if (Data.Columns.Contains(attrName))
+                    else
                     {
-                        if (!attrValueIsTime)
-                        {
-                            newRow[attrName] = attrValue;
-                        }
-                        else
-                        {
-                            //DateTime connectionTime = DateTime.ParseExact(attrValue, _terminalDateFormat,
-                            //    CultureInfo.InvariantCulture);
+                        DataColumn newColumn = new DataColumn(attrName, typeof(DateTime));
+                        newColumn.AllowDBNull = true;
+                        newColumn.Caption = attrName;
+                        Data.Columns.Add(newColumn);
 
-                            if (timeAtrrValue != default(DateTime))
-                            {
-                                newRow[attrName] = timeAtrrValue;
-                            }
-                            else
-                            {
-                                newRow[attrName] = DBNull.Value;
-                            }
-                        }
+                        Columns.Add(new Column {Name = attrName, ValueType = typeof(DateTime)});
+                    }
+                }
+
+                if (!attrValueIsTime)
+                {
+                    dataRow[attrName] = attrValue;
+                }
+                else
+                {
+                    if (timeAtrrValue != default(DateTime))
+                    {
+                        dataRow[attrName] = timeAtrrValue;
+                    }
+                    else
+                    {
+                        dataRow[attrName] = DBNull.Value;
                     }
                 }
             }
 
-            //terminalNode.Elements()
-            
-            //Data.Rows.Add(newRow);
+            foreach (XElement sensorNode in sensorNodes)
+            {
+                string type = sensorNode.Attribute("type")?.Value;
 
-            //AddDataRow((XElement) terminalNode.NextNode);
-            return newRow;
+                if (type == null) continue;
+
+                string stringValue = sensorNode.Attribute("value")?.Value;
+
+                Type valueType = null;
+                int intValue = 0;
+                double doubleValue = 0;
+
+                if (int.TryParse(stringValue, out intValue))
+                {
+                    valueType = typeof(int);
+                }
+                else if (double.TryParse(stringValue, NumberStyles.Any, CultureInfo.InvariantCulture, out doubleValue))
+                {
+                    valueType = typeof(double);
+                }
+                else
+                {
+                    valueType = typeof(string);
+                }
+
+                if (!Data.Columns.Contains(type))
+                {
+                    DataColumn newColumn = new DataColumn(type, valueType);
+                    Data.Columns.Add(newColumn);
+
+                    Columns.Add(new Column {Name = type, ValueType = valueType});
+                }
+
+                if (valueType == typeof(int))
+                {
+                    dataRow[type] = intValue;
+                }
+                else if (valueType == typeof(double))
+                {
+                    dataRow[type] = doubleValue;
+                }
+                else
+                {
+                    dataRow[type] = stringValue;
+                }
+            }
+
+            return true;
         }
     }
 }

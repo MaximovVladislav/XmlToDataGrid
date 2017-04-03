@@ -64,11 +64,11 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Converters\ColumnToDataGridColumnConverter.cs" />
-    <Compile Include="Converters\DataViewTestConverter.cs" />
+    <Compile Include="Converters\DBNullToDashConverter.cs" />
+    <Compile Include="Converters\DefaultDateToNothingConverter.cs" />
     <Compile Include="Converters\TimeSpanToStringConverter.cs" />
     <Compile Include="Infrastructure\ColumnBehavior.cs" />
-    <Compile Include="Infrastructure\DataGridColumnBinder.cs" />
+    <Compile Include="Infrastructure\Extensions.cs" />
     <Compile Include="Infrastructure\RelayCommand.cs" />
     <Compile Include="Models\Column.cs" />
     <Compile Include="Models\Terminal.cs" />

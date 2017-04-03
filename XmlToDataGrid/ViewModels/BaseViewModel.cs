@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace XmlToDataGrid.ViewModels
 {
+    /// <summary>
+    /// Базовый класс для ViewModel
+    /// </summary>
     public class BaseViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
