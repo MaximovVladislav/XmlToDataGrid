@@ -155,92 +155,101 @@ namespace XmlToDataGrid.ViewModels
 
                 if (terminalsNode == null) return;
 
-                AddDataRow((XElement)terminalsNode.FirstNode);
+                //AddDataRow((XElement)terminalsNode.FirstNode);
+                List<DataRow> rowList = new List<DataRow>();
+                
+                foreach(XElement terminalNode in (XElement)terminalsNode.Nodes)
+                {
+                    rowList.Add(CreateDataRow(terminalNode));
+                }
+                
+                Data.Rows.AddRangeOnUI(rowList);
             }
         }
 
-        void AddDataRow(XElement terminalNode)
+        DataRow CreateDataRow(XElement terminalNode)
         {
-            if (terminalNode == null) return;
+            if (terminalNode == null) throw new ArgumentNullException(nameof(terminalNode));
 
             var attributes = terminalNode.Attributes();
 
-            if (!attributes.Any()) return;
-
-            DataRow newRow = Data.NewRow();
-
-            foreach (XAttribute attribute in attributes)
+            if (attributes.Any())
             {
-                string attrName = attribute.Name.ToString();
-                string attrValue = attribute.Value;
-
-                string terminalDateFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
-
-                DateTime timeAtrrValue;
-                bool attrValueIsTime = DateTime.TryParseExact(attrValue, terminalDateFormat,
-                        CultureInfo.InvariantCulture, DateTimeStyles.None, out timeAtrrValue);
-
-                if (!Data.Columns.Contains(attrName))
+                foreach (XAttribute attribute in attributes)
                 {
-                    if (!attrValueIsTime)
+                    string attrName = attribute.Name.ToString();
+                    string attrValue = attribute.Value;
+
+                    string terminalDateFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
+
+                    DateTime timeAtrrValue;
+                    bool attrValueIsTime = DateTime.TryParseExact(attrValue, terminalDateFormat,
+                            CultureInfo.InvariantCulture, DateTimeStyles.None, out timeAtrrValue);
+
+                    if (!Data.Columns.Contains(attrName))
                     {
-                        DataColumn newColumn = new DataColumn(attrName, typeof(string));
-                        Data.Columns.Add(newColumn);
-
-                        Columns.Add(new Column {Name = attrName, ValueType = typeof(string)});
-
-                        //DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
-                        //newDataGridColumn.Binding = new Binding(attrName);
-                        //newDataGridColumn.Header = attrName;
-                        //Columns.Add(newDataGridColumn);
-                    }
-                    else
-                    {
-                        DataColumn newColumn = new DataColumn(attrName, typeof(DateTime));
-                        newColumn.AllowDBNull = true;
-                        newColumn.Caption = attrName;
-                        Data.Columns.Add(newColumn);
-
-                        Columns.Add(new Column {Name = attrName, ValueType = typeof(DateTime)});
-
-                        //DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
-                        //Binding binding = new Binding(attrName);
-                        //binding.StringFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
-                        //newDataGridColumn.Binding = binding;
-                        //newDataGridColumn.Header = attrName;
-                        //Columns.Add(newDataGridColumn);
-                    }
-                }
-
-                if (Data.Columns.Contains(attrName))
-                {
-                    if (!attrValueIsTime)
-                    {
-                        newRow[attrName] = attrValue;
-                    }
-                    else
-                    {
-                        //DateTime connectionTime = DateTime.ParseExact(attrValue, _terminalDateFormat,
-                        //    CultureInfo.InvariantCulture);
-
-                        if (timeAtrrValue != default(DateTime))
+                        if (!attrValueIsTime)
                         {
-                            newRow[attrName] = timeAtrrValue;
+                            DataColumn newColumn = new DataColumn(attrName, typeof(string));
+                            Data.Columns.Add(newColumn);
+
+                            Columns.Add(new Column {Name = attrName, ValueType = typeof(string)});
+
+                            //DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
+                            //newDataGridColumn.Binding = new Binding(attrName);
+                            //newDataGridColumn.Header = attrName;
+                            //Columns.Add(newDataGridColumn);
                         }
                         else
                         {
-                            newRow[attrName] = DBNull.Value;
+                            DataColumn newColumn = new DataColumn(attrName, typeof(DateTime));
+                            newColumn.AllowDBNull = true;
+                            newColumn.Caption = attrName;
+                            Data.Columns.Add(newColumn);
+
+                            Columns.Add(new Column {Name = attrName, ValueType = typeof(DateTime)});
+
+                            //DataGridTextColumn newDataGridColumn = new DataGridTextColumn();
+                            //Binding binding = new Binding(attrName);
+                            //binding.StringFormat = ConfigurationManager.AppSettings["terminalDateFormat"];
+                            //newDataGridColumn.Binding = binding;
+                            //newDataGridColumn.Header = attrName;
+                            //Columns.Add(newDataGridColumn);
+                        }
+                    }
+
+                    DataRow newRow = Data.NewRow();
+
+                    if (Data.Columns.Contains(attrName))
+                    {
+                        if (!attrValueIsTime)
+                        {
+                            newRow[attrName] = attrValue;
+                        }
+                        else
+                        {
+                            //DateTime connectionTime = DateTime.ParseExact(attrValue, _terminalDateFormat,
+                            //    CultureInfo.InvariantCulture);
+
+                            if (timeAtrrValue != default(DateTime))
+                            {
+                                newRow[attrName] = timeAtrrValue;
+                            }
+                            else
+                            {
+                                newRow[attrName] = DBNull.Value;
+                            }
                         }
                     }
                 }
             }
 
             //terminalNode.Elements()
+            
+            //Data.Rows.Add(newRow);
 
-            Data.Rows.Add(newRow);
-
-            AddDataRow((XElement) terminalNode.NextNode);
+            //AddDataRow((XElement) terminalNode.NextNode);
+            return newRow;
         }
-
     }
 }
