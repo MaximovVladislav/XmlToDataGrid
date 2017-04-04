@@ -11,27 +11,28 @@ namespace XmlToDataGrid.Infrastructure
     public static class Extensions
     {
         /// <summary>
-        /// Добавляет список объектов <see cref="T"/> в коллекцию в UI потоке
+        /// Добавляет список объектов <see cref="T"/> в коллекцию в UI потоке без повторений
         /// </summary>
         /// <typeparam name="T">Тип объекта</typeparam>
         /// <param name="collection">Коллекция</param>
         /// <param name="items">Список добавляемыхобъектов <see cref="T"/></param>
-        public static void AddRangeOnUI<T>(this ObservableCollection<T> collection, IList<T> items)
+        public static void AddRangeUniqueOnUI<T>(this ObservableCollection<T> collection, IList<T> items)
         {
-            Application.Current.Dispatcher.BeginInvoke((Action)(() => collection.AddRange(items)));
+            Application.Current.Dispatcher.BeginInvoke((Action)(() => collection.AddRangeUnique(items)));
         }
 
         /// <summary>
-        /// Добавляет список объектов <see cref="T"/> в коллекцию
+        /// Добавляет список объектов <see cref="T"/> в коллекцию без повторений
         /// </summary>
         /// <typeparam name="T">Тип объекта</typeparam>
         /// <param name="collection">Коллекция</param>
         /// <param name="items">Список добавляемыхобъектов <see cref="T"/></param>
-        public static void AddRange<T>(this ObservableCollection<T> collection, IList<T> items)
+        public static void AddRangeUnique<T>(this ObservableCollection<T> collection, IList<T> items)
         {
             foreach (T item in items)
             {
-                collection.Add(item);
+                if (!collection.Contains(item))
+                    collection.Add(item);
             }
         }
 

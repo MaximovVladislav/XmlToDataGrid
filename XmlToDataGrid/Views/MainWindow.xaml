@@ -45,17 +45,11 @@
 
         <DataGrid Grid.Row="3" 
                   AutoGenerateColumns="False"
-                  ItemsSource="{Binding Data.DefaultView, UpdateSourceTrigger=PropertyChanged}"
+                  ItemsSource="{Binding Table.DefaultView, UpdateSourceTrigger=PropertyChanged}"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
-                  infrastructure:ColumnBehavior.Columns="{Binding Columns}"
+                  infrastructure:ColumnBehavior.Columns="{Binding Table.Columns}"
                   IsReadOnly="True">
-            <!--<DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Path=protocol}"/>
-                <DataGridTextColumn Binding="{Binding Path=serialId}"/>
-                <DataGridTextColumn Binding="{Binding Path=simNumber}"/>
-                <DataGridTextColumn Binding="{Binding Path=connectionTime}"/>
-            </DataGrid.Columns>-->
         </DataGrid>
     </Grid>
 </Window>

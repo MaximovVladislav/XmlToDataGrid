@@ -15,7 +15,6 @@ using System.Windows.Input;
 using System.Xml.Linq;
 using Microsoft.Win32;
 using XmlToDataGrid.Infrastructure;
-using XmlToDataGrid.Models;
 
 namespace XmlToDataGrid.ViewModels
 {
@@ -29,9 +28,7 @@ namespace XmlToDataGrid.ViewModels
         
         public MainWindowViewModel()
         {
-            Data = new DataTable();
-            //Columns = new ObservableCollection<DataGridColumn>();
-            Columns = new ObservableCollection<Column>();
+            Table = new DataTable();
         }
 
         public string Title => "Терминалы";
@@ -76,9 +73,7 @@ namespace XmlToDataGrid.ViewModels
             }
         }
 
-        public DataTable Data { get; set; }
-
-        public ObservableCollection<Column> Columns { get; set; }
+        public DataTable Table { get; set; }
 
         public ICommand LoadCommand
         {
@@ -94,7 +89,6 @@ namespace XmlToDataGrid.ViewModels
             }
             catch (Exception ex)
             {
-                //TODO: сделать логирование, а пока так
                 MessageBox.Show(ex.Message);
             }
             
@@ -109,7 +103,7 @@ namespace XmlToDataGrid.ViewModels
                 // Имитации длительной работы, чтобы увидеть асинхронность
                 //Thread.Sleep(5000);
                 
-                var doc = XDocument.Load(openFileDialog.FileName);
+                XDocument doc = XDocument.Load(openFileDialog.FileName);
 
                 XElement dataNode = (XElement)doc.FirstNode;
                 
@@ -155,7 +149,7 @@ namespace XmlToDataGrid.ViewModels
                 List<DataRow> rowList = new List<DataRow>();
                 
                 // Получаем строки для таблицы
-                foreach(XElement terminalNode in terminalsNode.Nodes())
+                foreach(XElement terminalNode in terminalsNode.Elements())
                 {
                     DataRow dataRow;
                     if (TryCreateDataRow(terminalNode, out dataRow))
@@ -165,11 +159,9 @@ namespace XmlToDataGrid.ViewModels
                 }
                 
                 //Добавляем новые строки в UI потоке
-                Data.Rows.AddRangeUniqueOnUI(rowList);
+                Table.Rows.AddRangeUniqueOnUI(rowList);
             }
         }
-
-        
 
         bool TryCreateDataRow(XElement terminalNode, out DataRow dataRow)
         {
@@ -177,11 +169,11 @@ namespace XmlToDataGrid.ViewModels
             if (terminalNode == null) throw new ArgumentNullException(nameof(terminalNode));
 
             var attributes = terminalNode.Attributes();
-            var sensorNodes = terminalNode.Nodes();
+            var sensorNodes = terminalNode.Elements();
 
             if (!attributes.Any() && !sensorNodes.Any()) return false;
 
-            dataRow = Data.NewRow();
+            dataRow = Table.NewRow();
 
             foreach (XAttribute attribute in attributes)
             {
@@ -194,28 +186,24 @@ namespace XmlToDataGrid.ViewModels
                 bool attrValueIsTime = DateTime.TryParseExact(attrValue, terminalDateFormat,
                     CultureInfo.InvariantCulture, DateTimeStyles.None, out timeAtrrValue);
 
-                if (!Data.Columns.Contains(attrName))
+                if (!Table.Columns.Contains(attrName))
                 {
                     if (!attrValueIsTime)
                     {
                         DataColumn newColumn = new DataColumn(attrName, typeof(string));
-                        Data.Columns.Add(newColumn);
+                        Table.Columns.Add(newColumn);
 
                         if (attrName == ConfigurationManager.AppSettings["keyAttribute"])
                         {
-                            Data.PrimaryKey = new[] {newColumn};
+                            Table.PrimaryKey = new[] {newColumn};
                         }
-
-                        Columns.Add(new Column {Name = attrName, ValueType = typeof(string)});
                     }
                     else
                     {
                         DataColumn newColumn = new DataColumn(attrName, typeof(DateTime));
                         newColumn.AllowDBNull = true;
                         newColumn.Caption = attrName;
-                        Data.Columns.Add(newColumn);
-
-                        Columns.Add(new Column {Name = attrName, ValueType = typeof(DateTime)});
+                        Table.Columns.Add(newColumn);
                     }
                 }
 
@@ -261,12 +249,10 @@ namespace XmlToDataGrid.ViewModels
                     valueType = typeof(string);
                 }
 
-                if (!Data.Columns.Contains(type))
+                if (!Table.Columns.Contains(type))
                 {
                     DataColumn newColumn = new DataColumn(type, valueType);
-                    Data.Columns.Add(newColumn);
-
-                    Columns.Add(new Column {Name = type, ValueType = valueType});
+                    Table.Columns.Add(newColumn);
                 }
 
                 if (valueType == typeof(int))
