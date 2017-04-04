@@ -4,6 +4,9 @@ using System.Windows.Data;
 
 namespace XmlToDataGrid.Converters
 {
+    /// <summary>
+    /// Конвертер, заменяющий значение по умолчанию <see cref="DateTime"/> на пустое значение
+    /// </summary>
     public class DefaultDateToNothingConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

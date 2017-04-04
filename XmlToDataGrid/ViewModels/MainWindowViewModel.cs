@@ -33,6 +33,9 @@ namespace XmlToDataGrid.ViewModels
 
         public string Title => "Терминалы";
 
+        /// <summary>
+        /// Дата начала
+        /// </summary>
         public DateTime BeginDate
         {
             get { return _beginDate; }
@@ -43,6 +46,9 @@ namespace XmlToDataGrid.ViewModels
             }
         }
 
+        /// <summary>
+        /// Дата окончания
+        /// </summary>
         public DateTime EndDate
         {
             get { return _endDate; }
@@ -53,6 +59,9 @@ namespace XmlToDataGrid.ViewModels
             }
         }
 
+        /// <summary>
+        /// Состояние сервера
+        /// </summary>
         public string ServerState
         {
             get { return _serverState; }
@@ -63,6 +72,9 @@ namespace XmlToDataGrid.ViewModels
             }
         }
 
+        /// <summary>
+        /// Время работы сервера
+        /// </summary>
         public TimeSpan UpTime
         {
             get { return _upTime; }
@@ -73,6 +85,9 @@ namespace XmlToDataGrid.ViewModels
             }
         }
 
+        /// <summary>
+        /// Таблица терминалов
+        /// </summary>
         public DataTable Table { get; set; }
 
         public ICommand LoadCommand
@@ -89,6 +104,7 @@ namespace XmlToDataGrid.ViewModels
             }
             catch (Exception ex)
             {
+                // Простейший вариант обработки исключений
                 MessageBox.Show(ex.Message);
             }
             
@@ -175,6 +191,7 @@ namespace XmlToDataGrid.ViewModels
 
             dataRow = Table.NewRow();
 
+            // Цикл по атрибутам
             foreach (XAttribute attribute in attributes)
             {
                 string attrName = attribute.Name.ToString();
@@ -224,6 +241,7 @@ namespace XmlToDataGrid.ViewModels
                 }
             }
 
+            //Цикл по датчикам
             foreach (XElement sensorNode in sensorNodes)
             {
                 string type = sensorNode.Attribute("type")?.Value;

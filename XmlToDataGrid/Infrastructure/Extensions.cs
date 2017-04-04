@@ -11,32 +11,6 @@ namespace XmlToDataGrid.Infrastructure
     public static class Extensions
     {
         /// <summary>
-        /// Добавляет список объектов <see cref="T"/> в коллекцию в UI потоке без повторений
-        /// </summary>
-        /// <typeparam name="T">Тип объекта</typeparam>
-        /// <param name="collection">Коллекция</param>
-        /// <param name="items">Список добавляемыхобъектов <see cref="T"/></param>
-        public static void AddRangeUniqueOnUI<T>(this ObservableCollection<T> collection, IList<T> items)
-        {
-            Application.Current.Dispatcher.BeginInvoke((Action)(() => collection.AddRangeUnique(items)));
-        }
-
-        /// <summary>
-        /// Добавляет список объектов <see cref="T"/> в коллекцию без повторений
-        /// </summary>
-        /// <typeparam name="T">Тип объекта</typeparam>
-        /// <param name="collection">Коллекция</param>
-        /// <param name="items">Список добавляемыхобъектов <see cref="T"/></param>
-        public static void AddRangeUnique<T>(this ObservableCollection<T> collection, IList<T> items)
-        {
-            foreach (T item in items)
-            {
-                if (!collection.Contains(item))
-                    collection.Add(item);
-            }
-        }
-
-        /// <summary>
         /// Добавляет список <see cref="DataRow"/> в коллекцию <see cref="DataRowCollection"/> в UI потоке без повторений
         /// </summary>
         /// <param name="collection">Коллекция строк <see cref="DataRowCollection"/></param>
@@ -62,6 +36,8 @@ namespace XmlToDataGrid.Infrastructure
                 }
                 catch (Exception ex)
                 {
+                    // если с каким-то объектом возникнет ошибка, например, ключевой атрибут отсутствует,
+                    // добавление других объектов продолжится нормально
                     MessageBox.Show(ex.Message);
                 }
             }

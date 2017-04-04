@@ -4,6 +4,9 @@ using System.Windows.Data;
 
 namespace XmlToDataGrid.Converters
 {
+    /// <summary>
+    /// Конвертер для отображения часов <see cref="TimeSpan"/> в часах, а не днях и часах
+    /// </summary>
     public class TimeSpanToStringConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

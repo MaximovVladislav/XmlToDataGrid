@@ -42,8 +42,6 @@ namespace XmlToDataGrid.Infrastructure
             if (_dataGrid == null) return;
             _dataGrid.Columns.Clear();
 
-            //ObservableCollection<Column> columns = e.NewValue as ObservableCollection<Column>;
-
             DataColumnCollection columns = e.NewValue as DataColumnCollection;
 
             if (columns == null) return;
@@ -55,7 +53,6 @@ namespace XmlToDataGrid.Infrastructure
                 AddColumnsInAcyncContext(_dataGrid, newColumns);
             }
 
-            //columns.CollectionChanged += Columns_CollectionChanged;
             columns.CollectionChanged += Columns_CollectionChanged;
         }
 
@@ -66,14 +63,6 @@ namespace XmlToDataGrid.Infrastructure
                 AddColumnInAcyncContext(_dataGrid, e.Element);
             }
         }
-
-        //private static void Columns_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        //{
-        //    if (e.Action == NotifyCollectionChangedAction.Add)
-        //    {
-        //        AddColumnsInAcyncContext(_dataGrid, e.NewItems);
-        //    }
-        //}
 
         private static DataGridColumn ToGridColumn(DataColumn column)
         {

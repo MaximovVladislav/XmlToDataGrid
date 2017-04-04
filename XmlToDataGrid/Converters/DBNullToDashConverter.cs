@@ -4,6 +4,9 @@ using System.Windows.Data;
 
 namespace XmlToDataGrid.Converters
 {
+    /// <summary>
+    /// Конвертер, заменяющий <see cref="DBNull"/> на прочерк
+    /// </summary>
     public class DBNullToDashConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
